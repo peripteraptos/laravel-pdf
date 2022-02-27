@@ -35,6 +35,8 @@ class Pdf {
 			'tempDir'           => $this->getConfig('tempDir'),           // temporary directory
       'backupSubsFont'    => $this->getConfig('backupSubsFont'),    //
       'autoLangToFont'    => $this->getConfig('autoLangToFont')
+      'default_font'      => $this->getConfig('default_font')
+      'useSubstitutions'  => $this->getConfig('useSubstitutions')
 		];
 
 		// Handle custom fonts
