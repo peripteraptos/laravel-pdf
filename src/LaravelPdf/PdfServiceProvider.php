@@ -2,55 +2,92 @@
 
 namespace niklasravnsborg\LaravelPdf;
 
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\ServiceProvider as BaseServiceProvider;
+use Illuminate\Support\Str;
+use Illuminate\Support\ServiceProvider as IlluminateServiceProvider;
+use Mpdf\Mpdf;
 
-class PdfServiceProvider extends BaseServiceProvider {
+class PdfServiceProvider extends IlluminateServiceProvider
+{
+    /**
+     * Indicates if loading of the provider is deferred.
+     *
+     * @var bool
+     */
+    protected $defer = false;
 
-	/**
-	 * Indicates if loading of the provider is deferred.
-	 *
-	 * @var bool
-	 */
-	protected $defer = false;
+    /**
+     * Register the service provider.
+     *
+     * @return void
+     * @throws \Exception
+     */
+    public function register(): void
+    {
+        $configPath = __DIR__ . '/../config/mpdf.php';
+        $this->mergeConfigFrom($configPath, 'mpdf');
 
+        $this->app->bind('mpdf.options', function ($app) {
+            $defines = $app['config']->get('mpdf.defines');
 
-	/*
-	* Bootstrap the application service
-	*
-	* @return void
-	*/
-	public function boot()
-	{
-		$this->publishes([
-            	__DIR__ . '/../config/pdf.php' => config_path('pdf.php'),
-        	]);
-    	}
-	
-	/**
-	 * Register the service provider.
-	 *
-	 * @return void
-	 */
-	public function register()
-	{
-		$this->mergeConfigFrom(
-			__DIR__ . '/../config/pdf.php', 'pdf'
-		);
+            if ($defines) {
+                $options = [];
+                /**
+                 * @var string $key
+                 * @var mixed $value
+                 */
+                foreach ($defines as $key => $value) {
+                    $key = strtolower(str_replace('MPDF_', '', $key));
+                    $options[$key] = $value;
+                }
+            } else {
+                $options = $app['config']->get('mpdf.options');
+            }
 
-		$this->app->bind('mpdf.wrapper', function($app) {
-			return new PdfWrapper();
-		});
-	}
+            return $options;
+        });
 
-	/**
-	 * Get the services provided by the provider.
-	 *
-	 * @return array
-	 */
-	public function provides()
-	{
-		return array('mpdf.pdf');
-	}
+        $this->app->bind('mpdf', function ($app) {
 
+            $options = $app->make('mpdf.options');
+            $mpdf = new Mpdf($options);
+            $path = realpath(base_path('public'));
+            if ($path === false) {
+                throw new \RuntimeException('Cannot resolve public path');
+            }
+            $mpdf->setBasePath($path);
+
+            return $mpdf;
+        });
+        $this->app->alias('mpdf', Mpdf::class);
+
+        $this->app->bind('mpdf.wrapper', function ($app) {
+            return new Pdf($app['mpdf'], $app['config'], $app['files'], $app['view']);
+        });
+    }
+
+    public function boot(): void
+    {
+        if (!$this->isLumen()) {
+            $configPath = __DIR__ . '/../config/mpdf.php';
+            $this->publishes([$configPath => config_path('mpdf.php')], 'config');
+        }
+    }
+
+    /**
+     * Check if package is running under Lumen app
+     */
+    protected function isLumen(): bool
+    {
+        return Str::contains($this->app->version(), 'Lumen') === true;
+    }
+
+    /**
+     * Get the services provided by the provider.
+     *
+     * @return array<string>
+     */
+    public function provides(): array
+    {
+        return ['mpdf', 'mpdf.options', 'mpdf.wrapper'];
+    }
 }

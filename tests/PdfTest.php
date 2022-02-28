@@ -2,7 +2,7 @@
 
 namespace niklasravnsborg\LaravelPdf\Test;
 
-use PDF;
+use niklasravnsborg\LaravelPdf\Facades\Pdf;
 use Imagick;
 
 class PdfTest extends TestCase
