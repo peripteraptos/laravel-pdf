@@ -36,7 +36,7 @@ class PdfServiceProvider extends IlluminateServiceProvider
                  * @var mixed $value
                  */
                 foreach ($defines as $key => $value) {
-                    $key = strtolower(str_replace('MPDF_', '', $key));
+                    $key = str_replace('MPDF_', '', $key);
                     $options[$key] = $value;
                 }
             } else {
