@@ -39,7 +39,7 @@ class PdfServiceProvider extends IlluminateServiceProvider
                  */
                 foreach ($defines as $key => $value) {
                     if ($key == "fontDir") {
-                        $options[$key] = array_merge((new ConfigVariables())->getDefaults()['fontDir'], $value);
+                        $options[$key] = array_merge((new ConfigVariables())->getDefaults()['fontDir'], [$value]);
                     } elseif ($key == "fontdata") {
                         $options[$key] = array_merge((new FontVariables())->getDefaults()['fontdata'], $value);
                     } else {
