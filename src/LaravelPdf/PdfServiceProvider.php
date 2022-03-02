@@ -4,6 +4,8 @@ namespace niklasravnsborg\LaravelPdf;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\ServiceProvider as IlluminateServiceProvider;
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 
 class PdfServiceProvider extends IlluminateServiceProvider
@@ -36,8 +38,13 @@ class PdfServiceProvider extends IlluminateServiceProvider
                  * @var mixed $value
                  */
                 foreach ($defines as $key => $value) {
-                    $key = str_replace('MPDF_', '', $key);
-                    $options[$key] = $value;
+                    if ($key == "fontDir") {
+                        $options[$key] = array_merge((new ConfigVariables())->getDefaults()['fontDir'], $value);
+                    } elseif ($key == "fontdata") {
+                        $options[$key] = array_merge((new FontVariables())->getDefaults()['fontdata'], $value);
+                    } else {
+                        $options[$key] = $value;
+                    }
                 }
             } else {
                 $options = $app['config']->get('mpdf.options');
